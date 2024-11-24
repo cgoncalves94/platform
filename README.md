@@ -6,17 +6,17 @@ A collection of reusable workflows and composite actions for standardizing CI/CD
 
 ```
 .
-├── .github/    
-│   ├── workflows/            
+├── .github/
+│   ├── workflows/
 │   │   └──  pre-commit-hooks.yml
 │   ├── CODEOWNERS
 ├── github/
-│   ├── composite-actions/    
+│   ├── composite-actions/
 │   │   ├── aws-configure/
 │   │   ├── docker-build-and-push/
 │   │   ├── helm-install-local-chart/
 │   │   └── setup-environment/
-│   └── reusable-workflows/   
+│   └── reusable-workflows/
 │       ├── aws-build-push/
 │       ├── docker-build-deploy/
 │       └── node-build-test/

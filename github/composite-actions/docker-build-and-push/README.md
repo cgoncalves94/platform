@@ -49,14 +49,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Login to registry
         uses: docker/login-action@v3
         with:
           registry: registry.example.com
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
-      
+
       - name: Build and push
         uses: cgoncalves94/platform/github/composite-actions/docker-build-and-push@main
         with:
