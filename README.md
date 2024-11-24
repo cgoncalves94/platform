@@ -10,7 +10,6 @@ A collection of reusable workflows and composite actions for standardizing CI/CD
 │   ├── ISSUE_TEMPLATE/       
 │   └── workflows/            
 │       ├── pre-commit-hooks.yml
-│       └── aws-build-push-and-deploy-to-eks.yml
 ├── github/
 │   ├── composite-actions/    
 │   │   ├── aws-configure/
