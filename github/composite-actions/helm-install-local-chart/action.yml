@@ -1,0 +1,84 @@
+name: 'Install Helm Chart'
+description: 'Installs or upgrades a Helm chart for local development'
+
+inputs:
+  cluster_name:
+    description: 'Name of the Kubernetes cluster'
+    required: true
+  chart_path:
+    description: 'Path to the Helm chart'
+    required: true
+  release_name:
+    description: 'Name of the Helm release'
+    required: true
+  namespace:
+    description: 'Kubernetes namespace'
+    required: true
+    default: 'default'
+  values_file:
+    description: 'Path to values file'
+    required: false
+  set_values:
+    description: 'Additional values to set (comma-separated key=value pairs)'
+    required: false
+  timeout:
+    description: 'Timeout for Helm operations'
+    required: false
+    default: '5m'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install Helm
+      shell: bash
+      run: |
+        curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+    - name: Create namespace
+      shell: bash
+      run: |
+        kubectl create namespace ${{ inputs.namespace }} --dry-run=client -o yaml | kubectl apply -f -
+
+    - name: Add helm repos
+      shell: bash
+      run: |
+        if [ -f ${{ inputs.chart_path }}/repositories.txt ]; then
+          while IFS= read -r repo || [ -n "$repo" ]; do
+            name=$(echo $repo | cut -d'=' -f1)
+            url=$(echo $repo | cut -d'=' -f2)
+            helm repo add $name $url
+          done < ${{ inputs.chart_path }}/repositories.txt
+          helm repo update
+        fi
+
+    - name: Build values argument
+      id: values
+      shell: bash
+      run: |
+        VALUES_ARG=""
+        if [ -n "${{ inputs.values_file }}" ]; then
+          VALUES_ARG="$VALUES_ARG -f ${{ inputs.values_file }}"
+        fi
+        if [ -n "${{ inputs.set_values }}" ]; then
+          IFS=',' read -ra SETS <<< "${{ inputs.set_values }}"
+          for set in "${SETS[@]}"; do
+            VALUES_ARG="$VALUES_ARG --set $set"
+          done
+        fi
+        echo "args=${VALUES_ARG}" >> $GITHUB_OUTPUT
+
+    - name: Install/Upgrade Helm chart
+      shell: bash
+      run: |
+        helm upgrade --install ${{ inputs.release_name }} ${{ inputs.chart_path }} \
+          --namespace ${{ inputs.namespace }} \
+          --create-namespace \
+          --timeout ${{ inputs.timeout }} \
+          ${{ steps.values.outputs.args }}
+
+    - name: Verify deployment
+      shell: bash
+      run: |
+        echo "Waiting for pods to be ready..."
+        kubectl wait --for=condition=ready pod -l app=${{ inputs.release_name }} \
+          -n ${{ inputs.namespace }} --timeout=${{ inputs.timeout }}
