@@ -6,10 +6,10 @@ A collection of reusable workflows and composite actions for standardizing CI/CD
 
 ```
 .
-├── .github/
-│   ├── ISSUE_TEMPLATE/       
-│   └── workflows/            
-│       ├── pre-commit-hooks.yml
+├── .github/    
+│   ├── workflows/            
+│   │   └──  pre-commit-hooks.yml
+│   ├── CODEOWNERS
 ├── github/
 │   ├── composite-actions/    
 │   │   ├── aws-configure/
