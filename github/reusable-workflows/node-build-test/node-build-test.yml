@@ -1,0 +1,83 @@
+name: Node.js Build and Test
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        description: 'Node.js version to use'
+        type: string
+        required: false
+        default: '18'
+      working-directory:
+        description: 'Directory containing package.json'
+        type: string
+        required: false
+        default: '.'
+      test-command:
+        description: 'Custom test command'
+        type: string
+        required: false
+        default: 'npm test'
+      coverage-enabled:
+        description: 'Enable coverage reporting'
+        type: boolean
+        required: false
+        default: true
+    outputs:
+      tests-passed:
+        description: 'Whether all tests passed'
+        value: ${{ jobs.test.outputs.success }}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    outputs:
+      success: ${{ steps.test-status.outputs.success }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js environment
+        uses: cgoncalves94/platform/github/composite-actions/setup-environment@main
+        with:
+          node-version: ${{ inputs.node-version }}
+
+      - name: Install dependencies
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          npm ci
+          
+      - name: Lint
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          if [ -f package.json ] && grep -q '"lint"' package.json; then
+            npm run lint
+          else
+            echo "No lint script found, skipping"
+          fi
+
+      - name: Type check
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          if [ -f package.json ] && grep -q '"typecheck"' package.json; then
+            npm run typecheck
+          else
+            echo "No typecheck script found, skipping"
+          fi
+
+      - name: Run tests
+        id: run-tests
+        working-directory: ${{ inputs.working-directory }}
+        run: ${{ inputs.test-command }}
+
+      - name: Upload coverage reports
+        if: inputs.coverage-enabled
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-reports
+          path: ${{ inputs.working-directory }}/coverage
+          retention-days: 7
+
+      - name: Set test status
+        id: test-status
+        run: echo "success=true" >> $GITHUB_OUTPUT
