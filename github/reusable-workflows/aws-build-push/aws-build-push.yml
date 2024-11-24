@@ -1,0 +1,66 @@
+name: AWS Build and Push
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        type: string
+        required: true
+      aws-region:
+        description: 'AWS region'
+        type: string
+        required: false
+        default: 'eu-west-1'
+      image-name:
+        description: 'Name of the Docker image'
+        type: string
+        required: true
+      dockerfile:
+        description: 'Path to Dockerfile'
+        type: string
+        required: false
+        default: 'Dockerfile'
+      build-args:
+        description: 'Build arguments as JSON string'
+        type: string
+        required: false
+        default: '{}'
+    secrets:
+      aws-access-key:
+        required: true
+      aws-secret-key:
+        required: true
+      aws-role-arn:
+        required: false
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: cgoncalves94/platform/github/composite-actions/aws-configure@main
+        with:
+          aws-access-key: ${{ secrets.aws-access-key }}
+          aws-secret-key: ${{ secrets.aws-secret-key }}
+          aws-region: ${{ inputs.aws-region }}
+
+      - name: Assume IAM Role
+        if: secrets.aws-role-arn != ''
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.aws-role-arn }}
+          aws-region: ${{ inputs.aws-region }}
+
+      - name: Build and push to ECR
+        uses: cgoncalves94/platform/github/composite-actions/docker-build-and-push@main
+        with:
+          environment: ${{ inputs.environment }}
+          registry_url: ${{ steps.aws-configure.outputs.registry_url }}
+          image_name: ${{ inputs.image-name }}
+          dockerfile: ${{ inputs.dockerfile }}
+          build_args: ${{ inputs.build-args }}
