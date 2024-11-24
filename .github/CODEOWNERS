@@ -1,0 +1,13 @@
+# Platform repository code owners
+# See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owners for everything in the repo
+* @cgoncalves94
+
+# Workflow and action specific owners
+/.github/workflows/ @cgoncalves94
+/github/composite-actions/ @cgoncalves94
+/github/reusable-workflows/ @cgoncalves94
+
+# Documentation
+*.md @cgoncalves94
