@@ -1,4 +1,9 @@
-# Platform Workflows
+## Platform Workflows
+![GitHub stars](https://img.shields.io/github/stars/cgoncalves94/platform?style=social)
+![GitHub forks](https://img.shields.io/github/forks/cgoncalves94/platform?style=social)
+![GitHub issues](https://img.shields.io/github/issues/cgoncalves94/platform)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![Pre-commit hooks status](https://github.com/cgoncalves94/platform/workflows/Pre-commit%20Hooks/badge.svg)](https://github.com/cgoncalves94/platform/actions)
 
 A collection of reusable workflows and composite actions for standardizing CI/CD processes across repositories.
 
