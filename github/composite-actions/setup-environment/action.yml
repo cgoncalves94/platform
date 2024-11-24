@@ -1,0 +1,59 @@
+name: 'Setup Environment'
+description: 'Sets up build environment with caching for multiple languages'
+
+inputs:
+  node-version:
+    description: 'Node.js version to use'
+    required: false
+    default: ''
+  python-version:
+    description: 'Python version to use'
+    required: false
+    default: ''
+  java-version:
+    description: 'Java version to use'
+    required: false
+    default: ''
+  cache:
+    description: 'Whether to enable caching'
+    required: false
+    default: 'true'
+
+runs:
+  using: "composite"
+  steps:
+    # Node.js setup
+    - name: Setup Node.js
+      if: inputs.node-version != ''
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: 'npm'
+        cache-dependency-path: '**/package-lock.json'
+
+    # Python setup
+    - name: Setup Python
+      if: inputs.python-version != ''
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+        cache: 'pip'
+        cache-dependency-path: '**/requirements.txt'
+
+    # Java setup
+    - name: Setup Java
+      if: inputs.java-version != ''
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ inputs.java-version }}
+        distribution: 'temurin'
+        cache: 'maven'
+
+    # Common environment setup
+    - name: Setup common tools
+      shell: bash
+      run: |
+        echo "Setting up common build tools..."
+        if [ "${{ inputs.cache }}" = "true" ]; then
+          echo "Cache enabled for build artifacts"
+        fi
