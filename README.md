@@ -7,12 +7,20 @@ A collection of reusable workflows and composite actions for standardizing CI/CD
 ```
 .
 ├── .github/
-│   ├── workflows/           # Example workflows showing how to use the reusable components
-│   └── CODEOWNERS
+│   ├── ISSUE_TEMPLATE/       
+│   └── workflows/            
+│       ├── pre-commit-hooks.yml
+│       └── aws-build-push-and-deploy-to-eks.yml
 ├── github/
-│   ├── composite-actions/   # Composite actions that can be used in workflows
-│   └── reusable-workflows/  # Reusable workflows that can be shared across repos
-├── docs/                    # Documentation for workflows and actions
+│   ├── composite-actions/    
+│   │   ├── aws-configure/
+│   │   ├── docker-build-and-push/
+│   │   ├── helm-install-local-chart/
+│   │   └── setup-environment/
+│   └── reusable-workflows/   
+│       ├── aws-build-push/
+│       ├── docker-build-deploy/
+│       └── node-build-test/
 └── README.md
 ```
 
@@ -20,27 +28,42 @@ A collection of reusable workflows and composite actions for standardizing CI/CD
 
 ### Composite Actions
 
-1. **docker-build-and-push**
+1. **aws-configure**
+   - Configures AWS credentials and authenticates to ECR
+   - Creates AWS profile and sets up environment
+   - [Documentation](github/composite-actions/aws-configure/README.md)
+
+2. **docker-build-and-push**
    - Builds and pushes Docker images to any container registry
    - Supports multiple environments and registries
    - [Documentation](github/composite-actions/docker-build-and-push/README.md)
 
-2. **setup-environment**
+3. **helm-install-local-chart**
+   - Installs Helm charts for local development
+   - Configures Kubernetes deployments
+   - [Documentation](github/composite-actions/helm-install-local-chart/README.md)
+
+4. **setup-environment**
    - Sets up build environment with caching
-   - Configures language-specific tools (Node.js, Python, etc.)
+   - Configures language-specific tools (Node.js, Python, Java)
    - [Documentation](github/composite-actions/setup-environment/README.md)
 
 ### Reusable Workflows
 
-1. **node-build-test**
-   - Builds and tests Node.js applications
-   - Includes caching and parallel testing
-   - [Documentation](github/reusable-workflows/node-build-test/README.md)
+1. **aws-build-push**
+   - Complete workflow for AWS deployments
+   - Includes ECR push and EKS deployment
+   - [Documentation](github/reusable-workflows/aws-build-push/README.md)
 
 2. **docker-build-deploy**
    - Complete workflow for Docker-based applications
    - Supports multiple deployment targets
    - [Documentation](github/reusable-workflows/docker-build-deploy/README.md)
+
+3. **node-build-test**
+   - Builds and tests Node.js applications
+   - Includes caching and parallel testing
+   - [Documentation](github/reusable-workflows/node-build-test/README.md)
 
 ## Usage
 
@@ -56,10 +79,15 @@ steps:
 2. Call reusable workflows:
 ```yaml
 jobs:
-  build:
-    uses: cgoncalves94/platform/.github/workflows/node-build-test.yml@main
+  deploy:
+    uses: cgoncalves94/platform/.github/workflows/aws-build-push.yml@main
     with:
-      node-version: '18'
+      environment: production
+      registry-type: aws
+      image-name: my-app
+    secrets:
+      aws-access-key: ${{ secrets.AWS_ACCESS_KEY }}
+      aws-secret-key: ${{ secrets.AWS_SECRET_KEY }}
 ```
 
 ## Contributing
