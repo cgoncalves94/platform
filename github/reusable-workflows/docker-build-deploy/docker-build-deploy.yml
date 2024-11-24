@@ -1,0 +1,79 @@
+name: Docker Build and Deploy
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        type: string
+        required: true
+      registry-type:
+        description: 'Container registry type (docker, ghcr, aws)'
+        type: string
+        required: true
+        default: 'docker'
+      image-name:
+        description: 'Name of the Docker image'
+        type: string
+        required: true
+      dockerfile-path:
+        description: 'Path to the Dockerfile'
+        type: string
+        required: false
+        default: 'Dockerfile'
+      deploy-type:
+        description: 'Deployment type (k8s, compose, etc)'
+        type: string
+        required: false
+        default: 'k8s'
+    secrets:
+      registry-username:
+        description: 'Username for container registry'
+        required: true
+      registry-password:
+        description: 'Password for container registry'
+        required: true
+      deploy-token:
+        description: 'Token for deployment'
+        required: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Configure registry credentials
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ inputs.registry-type == 'aws' && 'public.ecr.aws' || inputs.registry-type == 'ghcr' && 'ghcr.io' || '' }}
+          username: ${{ secrets.registry-username }}
+          password: ${{ secrets.registry-password }}
+
+      - name: Build and push image
+        uses: cgoncalves94/platform/github/composite-actions/docker-build-and-push@main
+        id: build
+        with:
+          environment: ${{ inputs.environment }}
+          registry_url: ${{ inputs.registry-type == 'aws' && 'public.ecr.aws' || inputs.registry-type == 'ghcr' && 'ghcr.io' || 'docker.io' }}
+          image_name: ${{ inputs.image-name }}
+
+      - name: Deploy to Kubernetes
+        if: inputs.deploy-type == 'k8s'
+        uses: cgoncalves94/platform/github/composite-actions/setup-environment@main
+        with:
+          environment: ${{ inputs.environment }}
+          image_uri: ${{ steps.build.outputs.image_uri }}
+          image_tag: ${{ steps.build.outputs.image_tag }}
+          deploy_token: ${{ secrets.deploy-token }}
+
+      - name: Deploy with Docker Compose
+        if: inputs.deploy-type == 'compose'
+        run: |
+          echo "Deploying with Docker Compose..."
+          docker-compose -f docker-compose.${{ inputs.environment }}.yml up -d
